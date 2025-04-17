@@ -1,104 +1,70 @@
-#include "../include/repo.hpp"
-#include "../include/utility.hpp"
-#include <exception>
+#include <memory>
+#include <string>
+#include <repo.hpp>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
+#include <fstream>
+#include <file.hpp>
+#include <vector>
 
-#define FOLDERNAME ".gitt"
+#define reponame std::string(".vcs")
 
-Repository::Repository(std::string path) : path(std::filesystem::path(path)) {};
+namespace fs = std::filesystem;
 
-bool Repository::checkIfRepoExists() {
-  return std::filesystem::exists(FOLDERNAME);
-}
+class RepoImpl
+{
+public: 
+  RepoImpl() {};
+  ~RepoImpl() {};
 
-void Repository::initRepo() {
-  if (checkIfRepoExists()) {
-    std::cout << "Repository already exists" << std::endl;
-    return;
-  }
-  std::string trackedDirPath =
-      std::filesystem::absolute(std::filesystem::current_path());
-  try {
-    if (std::filesystem::create_directory(std::string(FOLDERNAME))) {
-      std::filesystem::create_directory(std::string(FOLDERNAME) + "/objects");
-      std::filesystem::create_directory(std::string(FOLDERNAME) + "/refs");
-      std::ofstream head(std::string(FOLDERNAME) + "/HEAD");
-      head << "ref: refs/heads/main\n";
-      std::ofstream index(std::string(FOLDERNAME) + "/INDEX");
-      std::ofstream logFile(std::string(FOLDERNAME) + "/LOG");
-
-      logFile << "------Repository created------" << std::endl
-              << "Date:   " << getCurrentTime() << std::endl;
-
-      index.close();
-      logFile.close();
-
-      std::cout << "Repository created successfully" << std::endl;
-    }
-  } catch (const std::filesystem::filesystem_error &e) {
-    std::cout << "Error: " << e.what() << std::endl;
-  }
-}
-
-void Repository::log() {
-  try {
-    std::ifstream logFile(std::string(FOLDERNAME) + "/LOG");
-    std::string content, line;
-
-    if (!logFile.is_open())
-      throw std::exception();
-
-    while (std::getline(logFile, line)) {
-      content += line + "\n";
-    }
-
-    logFile.close();
-
-    std::cout << content;
-  } catch (const std::exception &e) {
-    std::cout << "Error: " << e.what() << std::endl;
-    return;
-  }
-}
-
-void Repository::status() {
-  try {
-    if (!checkIfRepoExists()) {
-      std::cout << "Repository does not exist!" << std::endl;
+  void init() {
+    
+    if(fs::exists(".vcs")) {
+      std::cout << "Repo already exist!";
       return;
     }
 
-    Files indexedFiles;
-    Files actualFiles;
+    fs::create_directory(reponame);
 
-    std::filesystem::recursive_directory_iterator dirIterator(
-        std::filesystem::absolute(path).parent_path());
-    std::filesystem::recursive_directory_iterator endIterator;
+    std::ofstream indexf(reponame +"/INDEX");
+    std::ofstream logf(reponame +"/LOG");
 
-    // Iterate through each file in the repo
-    for (; dirIterator != endIterator; ++dirIterator) {
-      if (std::filesystem::is_regular_file(dirIterator->path())) {
-        std::string pathStr =
-            std::filesystem::relative(dirIterator->path()).string();
-        if (pathStr.find('.'))
-          actualFiles.add(File(std::filesystem::relative(dirIterator->path())));
-      }
-    }
-    indexedFiles.deserialize(std::string(FOLDERNAME) + "/INDEX");
+    log("Repo Created Succesfully");
 
-    for (auto &actualFile : actualFiles) {
-      if (!indexedFiles.isContain(actualFile))
-        std::cout << "Detected not indexed files: " << actualFile.getPath()
-                  << "\n";
-    }
-
-  } catch (const std::filesystem::filesystem_error &e) {
-    std::cout << "Error: " << e.what() << std::endl;
+    std::cout << "created!\n";
   }
-}
 
-void Repository::add(Files filesToStage) {
-  filesToStage.serialize(std::string(FOLDERNAME) + "/INDEX");
+  void log(std::string s) {
+    std::ofstream logf(reponame+"/LOG",
+                       std::ios::app);
+    logf << s;
+  }
+  
+  void status() {
+    std::vector<File> files;
+
+    for(const auto& f : fs::directory_iterator(".")) {
+      if(!f.is_directory())
+        files.push_back(f.path().string());
+    }
+
+    for(const auto& f : files)
+      std::cout << f.get().hash << " " << f.get().name << "\n";
+
+  }
+};
+
+Repo::Repo() : impl(std::make_unique<RepoImpl>()) {}
+Repo::~Repo() {}
+
+void Repo::init() {
+  impl->init();
+};
+
+void Repo::log(std::string s) {
+  impl->log(s);
+};
+
+void Repo::status() {
+  impl->status();
 }

@@ -1,15 +1,17 @@
-#include "../include/files.hpp"
-#include <string>
+#pragma once
+#include <memory>
 
-class Repository {
+class RepoImpl;
+  
+class Repo 
+{
 private:
-  std::string path;
+  std::unique_ptr<RepoImpl> impl;
+  void log(std::string s);
 
 public:
-  Repository(std::string path);
-  bool checkIfRepoExists();
-  void initRepo();
-  void log();
+  Repo();
+  ~Repo();
+  void init();
   void status();
-  void add(Files filesToStage);
 };
