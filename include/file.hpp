@@ -6,7 +6,11 @@ class FileImpl;
 typedef struct fdata {
   std::string name;
   std::string path;
-  uint64_t hash;
+  uint64_t    hash;
+  
+  operator std::string() const {
+    return name + "$" + path + "$" + std::to_string(hash) + "$";
+  }
 } fdata;
 
 class File
@@ -19,4 +23,6 @@ class File
     ~File();
     File(File&& oth);
     fdata get() const;
+    std::string bloboficate() const;
+    void debloboficate(std::string);
 };

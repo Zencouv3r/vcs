@@ -2,7 +2,6 @@
 #include <vector>
 
 uint64_t chash(std::ifstream& file) {
-
   file.seekg(0, std::ios::end);
   std::streamsize size = file.tellg();
   file.seekg(0, std::ios::beg);

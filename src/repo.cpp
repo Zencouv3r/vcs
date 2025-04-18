@@ -13,6 +13,20 @@ namespace fs = std::filesystem;
 
 class RepoImpl
 {
+private:
+  void serialize(std::vector<File> &files, std::ifstream f) {
+    std::vector<File> indxfiles;
+
+    std::string s;
+    while(std::getline(f, s)) {
+
+    }
+
+    for(auto &file : files) {
+      std::string out = file.get();
+    }
+  };
+  void deserialize();
 public: 
   RepoImpl() {};
   ~RepoImpl() {};
@@ -41,6 +55,8 @@ public:
   }
   
   void status() {
+    std::ifstream index(reponame +"/INDEX");
+
     std::vector<File> files;
 
     for(const auto& f : fs::directory_iterator(".")) {
@@ -49,8 +65,7 @@ public:
     }
 
     for(const auto& f : files)
-      std::cout << f.get().hash << " " << f.get().name << "\n";
-
+      std::cout << f.bloboficate() << "\n";
   }
 };
 
