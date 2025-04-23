@@ -21,8 +21,20 @@ class File
   public:
     File(const std::string& path);
     ~File();
+    File(const File& oth);
     File(File&& oth);
     fdata get() const;
     std::string bloboficate() const;
     void debloboficate(std::string);
+    
+    bool operator==(const File& oth) const;
 };
+
+namespace std {
+  template<>
+  struct hash<File> {
+    size_t operator()(const File& f) const noexcept {
+      return std::hash<std::string>()(f.get().path);
+    }
+  };
+}

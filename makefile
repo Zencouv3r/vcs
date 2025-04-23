@@ -1,6 +1,6 @@
 CXX = clang++
 CXXFLAGS = -std=c++20 -Iinclude
-LDFLAGS = -lcrypto
+LDFLAGS = 
 
 SRC_DIR = src
 OBJS_DIR = obj

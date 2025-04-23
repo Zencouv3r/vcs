@@ -1,7 +1,8 @@
 #include <file.hpp>
 #include <hash.hpp>
+#include <memory>
+#include <string>
 #include <vector>
-#include <iostream>
 
 namespace fs = std::filesystem;
 
@@ -30,11 +31,15 @@ class FileImpl
 
   public:
     FileImpl(const std::string& path) : path(path) {
+      if (path == "")
+        return;
       name = fs::path(path).filename();
       std::ifstream f(path);
       hash = chash(f);
     };
     ~FileImpl() {};
+
+    FileImpl(FileImpl& oth) : name(oth.name), path(oth.path), hash(oth.hash) {};
 
     fdata get() {return fdata{name, path, hash};}
 
@@ -45,15 +50,22 @@ class FileImpl
     void debloboficate(std::string s) {
       auto data = split(s, '$');
       name = data[0];
-      hash = data[1];
-      path = data[2];
+      path = data[1];
+      hash = std::stoull(data[2]);
     };
+
+    bool operator==(const File& oth) const {
+      bool p = this->path == oth.get().path;
+      return p;
+   }
 };
 
 File::File(const std::string& path)
     : impl(std::make_unique<FileImpl>(path)) {}
 
 File::~File() {}
+
+File::File(const File& oth) : impl(std::make_unique<FileImpl>(*oth.impl)) {}
 
 File::File(File&& oth) : impl(std::move(oth.impl)) {}
 
@@ -69,4 +81,7 @@ void File::debloboficate(std::string s) {
   impl->debloboficate(s);
 }
 
+bool File::operator==(const File& oth) const {
+  return impl->operator==(oth);
+}
 

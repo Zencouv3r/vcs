@@ -11,7 +11,6 @@ uint64_t chash(std::ifstream& file) {
   file.read(buff.data(), size);
   
   uint64_t hash = 0x0;
-
   for (auto c : buff) {
     hash ^= static_cast<uint8_t>(c);
     hash = (hash << 5) | (hash >> (64 - 5));
