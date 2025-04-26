@@ -3,6 +3,9 @@ obj/
 .gitt/
 .gitt
 compile_flags.txt
+*.txt
 /gitt
 .DS_Store
 VCS
+.vcs/
+.vcs
