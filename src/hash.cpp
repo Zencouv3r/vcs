@@ -13,6 +13,7 @@ uint64_t chash(std::ifstream& file) {
   uint64_t hash = 0x0;
   for (auto c : buff) {
     hash ^= static_cast<uint8_t>(c);
+    hash *= 0xAABBCCDD00;
     hash = (hash << 5) | (hash >> (64 - 5));
   }
 

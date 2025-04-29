@@ -2,7 +2,6 @@
 #include <functional>
 #include <map>
 #include <iostream>
-#include <file.hpp>
 
 int main(int argc, char *argv[])
 {
@@ -12,6 +11,8 @@ int main(int argc, char *argv[])
     {"init", std::bind(&Repo::init, &repo, std::placeholders::_1)},
     {"status", std::bind(&Repo::status, &repo, std::placeholders::_1)},
     {"add", std::bind(&Repo::add, &repo, std::placeholders::_1)},
+    {"commit", std::bind(&Repo::commit, &repo, std::placeholders::_1)},
+    {"list", std::bind(&Repo::list, &repo, std::placeholders::_1)},
   };
 
   if (argc <= 1) {
@@ -25,7 +26,12 @@ int main(int argc, char *argv[])
       args.insert(argv[i]);
 
   if (cmtable.contains(argv[1])) {
+    try {
     cmtable[argv[1]](std::move(args));
+    }
+    catch(const std::exception& e) {
+      std::cout << "Error: " << e.what() << "\n";
+    };
   }
   else {
     std::cout << "Unknown command";
