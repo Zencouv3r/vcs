@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sys/types.h>
+#include <unordered_set>
 #include "commit.hpp"
 #include "repo.hpp"
 
@@ -47,7 +49,7 @@ public:
     logf << s;
   }
 
-  void init(strset&& args) {
+  void init(strvec&& args) {
     if(fs::exists(REPONAME)) {
       std::cout << "Repo already exist!";
       return;
@@ -66,7 +68,7 @@ public:
     std::cout << "created!\n";
   }
   
-  void status(strset&& args) {
+  void status(strvec&& args) {
     if(!fs::exists(REPONAME)) { 
       std::cout << "Repo doesnt exist\n";
       return;
@@ -104,7 +106,7 @@ public:
     //   std::cout << f.bloboficate() << "\n";
   }
 
-  void add(strset&& args) {
+  void add(strvec&& args) {
     if (args.empty()) {
       std::cout << "Nothing to index\n";
       return;
@@ -137,14 +139,22 @@ public:
     write_to_index(indxfiles);
   }
 
-  void commit(strset&& args) {
+  void commit(strvec&& args) {
     std::string msg;
-    if(args.empty()) {
-      std::cout << "Message required\n";
+
+    bool msg_flag = false;
+
+    for (size_t i = 0; i < args.size(); i++) {
+      if (args[i] == "-m") {
+        msg = args[i+1];
+        msg_flag = true;
+      }
+    }
+
+    if (!msg_flag) {
+      std::cerr << "error: commit message required (use -m)\n";
       return;
-    } else
-      for(const auto& w : args)
-        msg += w + " ";
+    }
 
     std::unordered_set<File> indxfiles;
     read_from_index(indxfiles);
@@ -163,17 +173,70 @@ public:
     if (std::to_string(cur_commit.gethash()) == cur_ref_hash) {
       std::cout << "Nothing to commit\n";
       return;
-    } else {
-      cur_commit.save();
-      std::ofstream curf(REPONAME + "/CUR");
-      curf << cur_commit.gethash();
+    }
+
+    cur_commit.save();
+    std::ofstream outf(REPONAME + "/CUR");
+    outf << cur_commit.gethash();
+  }
+
+  void list(strvec&& args) {
+    for(auto &com : fs::directory_iterator(REPONAME + "/COMMITS")) {
+      std::ifstream commit(com.path());
+      std::string desc;
+      std::getline(commit, desc);
+      std::cout << "commit " << com.path().filename() <<
+        "\n Date: " << desc << "\n" << "  Description: " << "\n";
     }
   }
 
-  void list(strset args) {
-    for(auto &com : fs::directory_iterator(REPONAME + "/COMMITS")) {
-      std::cout << "Commit hash: " << com.path().filename();
+  void switchto(strvec&& args) {
+    if(args.empty()) {
+      std::cout << "not enough args\n";
+      return;
     }
+
+    std::unordered_set<File> files;
+    
+    for(auto &com : fs::directory_iterator(REPONAME + "/COMMITS")) {
+      if(args[0] == com.path().filename().string()) {
+        std::ifstream commit(com);
+        std::string readbuff;
+        std::getline(commit, readbuff);
+        
+        while(std::getline(commit, readbuff)) {
+          File file("");
+          file.debloboficate(readbuff);
+          files.insert(file);
+        }
+
+        for(auto &f : fs::directory_iterator(".")) {
+          if (f.path().filename().string()[0] != '.') {
+            if(f.is_directory())
+              fs::remove_all(f.path());
+            else
+              fs::remove(f.path());
+          }
+        }
+
+        for (const auto &f : files) {
+            fs::path file = f.get().path;
+            fs::create_directories(file.parent_path());
+            fs::copy(
+                REPONAME + "/OBJS/" + std::to_string(f.get().hash),
+                file,
+                fs::copy_options::overwrite_existing
+            );
+        }
+        std::ofstream curf(REPONAME + "/CUR");
+        curf << args[0];
+        write_to_index(files);
+        std::cout << "Switched to commit " << args[0];
+        return;
+      } 
+    }
+
+    std::cout << "Commit not found";
   }
 };
 
@@ -184,22 +247,26 @@ void Repo::log(std::string s) {
   impl->write_logs(s);
 };
 
-void Repo::init(strset&& args) {
+void Repo::init(strvec&& args) {
   impl->init(std::move(args));
 };
 
-void Repo::status(strset&& args) {
+void Repo::status(strvec&& args) {
   impl->status(std::move(args));
 }
 
-void Repo::add(strset&& args) {
+void Repo::add(strvec&& args) {
   impl->add(std::move(args));
 }
 
-void Repo::commit(strset&& args) {
+void Repo::commit(strvec&& args) {
   impl->commit(std::move(args));
 }
 
-void Repo::list(strset&& args) {
-   impl->list(std::move(args));
+void Repo::list(strvec&& args) {
+  impl->list(std::move(args));
+}
+
+void Repo::switchto(strvec&& args) { 
+  impl->switchto(std::move(args));
 }

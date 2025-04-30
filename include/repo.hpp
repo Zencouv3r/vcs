@@ -1,10 +1,10 @@
 #pragma once
 #include <memory>
-#include <unordered_set>
+#include <vector>
 
 #define REPONAME std::string(".vcs")
 
-typedef std::unordered_set<std::string> strset;
+typedef std::vector<std::string> strvec;
 
 class RepoImpl;
 class File;
@@ -20,11 +20,11 @@ private:
 public:
   Repo();
   ~Repo();
-  void init(strset&& args);
-  void status(strset&& args);
-  void add(strset&& args);
-  void commit(strset&& args);
-  void list(strset&& args);
-  void switchto(strset&& args);
+  void init(strvec&& args);
+  void status(strvec&& args);
+  void add(strvec&& args);
+  void commit(strvec&& args);
+  void list(strvec&& args);
+  void switchto(strvec&& args);
 };
 

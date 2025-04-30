@@ -2,17 +2,19 @@
 #include <functional>
 #include <map>
 #include <iostream>
+#include <vector>
 
 int main(int argc, char *argv[])
 {
   Repo repo;
 
-  std::map<std::string, std::function<void(std::unordered_set<std::string>&&)>> cmtable = {
+  std::map<std::string, std::function<void(std::vector<std::string>&&)>> cmtable = {
     {"init", std::bind(&Repo::init, &repo, std::placeholders::_1)},
     {"status", std::bind(&Repo::status, &repo, std::placeholders::_1)},
     {"add", std::bind(&Repo::add, &repo, std::placeholders::_1)},
     {"commit", std::bind(&Repo::commit, &repo, std::placeholders::_1)},
     {"list", std::bind(&Repo::list, &repo, std::placeholders::_1)},
+    {"switch", std::bind(&Repo::switchto, &repo, std::placeholders::_1)},
   };
 
   if (argc <= 1) {
@@ -20,10 +22,10 @@ int main(int argc, char *argv[])
     return 0;
   }
   
-  std::unordered_set<std::string> args;
+  std::vector<std::string> args;
   if(argc >= 2)
     for(size_t i = 2; i < argc; i++)
-      args.insert(argv[i]);
+      args.push_back(argv[i]);
 
   if (cmtable.contains(argv[1])) {
     try {
